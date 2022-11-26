@@ -1,37 +1,63 @@
-#include <arpa/inet.h> // inet_addr()
-#include <netdb.h>
+// gcc server.c -o server
+
 #include <stdio.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h> // bzero()
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h> // read(), write(), close()
 #define MAX 80
-#define PORT 8080
+//#define PORT 8080
 #define SA struct sockaddr
-void func(int sockfd)
+
+// Function designed for chat between client and server.
+void func(int connfd)
 {
 	char buff[MAX];
 	int n;
+	// infinite loop for chat
 	for (;;) {
-		bzero(buff, sizeof(buff));
-		printf("Enter the string : ");
+		bzero(buff, MAX);
+
+		// read the message from client and copy it in buffer
+		read(connfd, buff, sizeof(buff));
+		// print buffer which contains the client contents
+		printf("From client: %s\t To client : ", buff);
+		bzero(buff, MAX);
 		n = 0;
-		while ((buff[n++] = getchar()) != '\n');
-		write(sockfd, buff, sizeof(buff));
-		bzero(buff, sizeof(buff));
-		read(sockfd, buff, sizeof(buff));
-		printf("From Server : %s", buff);
-		if ((strncmp(buff, "exit", 4)) == 0) {
-			printf("Client Exit...\n");
+		// copy server message in the buffer
+		while ((buff[n++] = getchar()) != '\n')
+			;
+
+		// and send that buffer to client
+		write(connfd, buff, sizeof(buff));
+
+		// if msg contains "Exit" then server exit and chat ended.
+		if (strncmp("exit", buff, 4) == 0) {
+			printf("Server Exit...\n");
 			break;
 		}
 	}
 }
 
-int main()
+// Driver function
+int main(int argc , char* argv[])
 {
-	int sockfd, connfd;
+	if(argc != 3 && argc !=2){
+		perror("Usage : ./ncL [IP] [Port] \n \t or ./ncL [ip] \n");
+		exit(1);
+	}
+	uint16_t _port = (uint16_t)atoi(argv[1]);
+	in_addr_t IP = htonl(INADDR_ANY);
+	if(argc == 3){
+		IP = inet_addr(argv[1]);
+		printf("%s", argv[2]);
+		_port = (uint16_t)atoi(argv[2]);
+	}
+
+	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
 
 	// socket create and verification
@@ -46,21 +72,38 @@ int main()
 
 	// assign IP, PORT
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	servaddr.sin_port = htons(PORT);
+	servaddr.sin_addr.s_addr = IP ;//htonl(INADDR_ANY);
+	servaddr.sin_port = _port;
 
-	// connect the client socket to server socket
-	if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr))
-		!= 0) {
-		printf("connection with the server failed...\n");
+	// Binding newly created socket to given IP and verification
+	if ((bind(sockfd, (SA*)&servaddr, sizeof(servaddr))) != 0) {
+		printf("socket bind failed...\n");
 		exit(0);
 	}
 	else
-		printf("connected to the server..\n");
+		printf("Socket successfully binded..\n");
 
-	// function for chat
-	func(sockfd);
+	// Now server is ready to listen and verification
+	if ((listen(sockfd, 5)) != 0) {
+		printf("Listen failed...\n");
+		exit(0);
+	}
+	else
+		printf("Server listening..\n");
+	len = sizeof(cli);
 
-	// close the socket
+	// Accept the data packet from client and verification
+	connfd = accept(sockfd, (SA*)&cli, &len);
+	if (connfd < 0) {
+		printf("server accept failed...\n");
+		exit(0);
+	}
+	else
+		printf("server accept the client...\n");
+
+	// Function for chatting between client and server
+	func(connfd);
+
+	// After chatting close the socket
 	close(sockfd);
 }
