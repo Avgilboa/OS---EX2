@@ -1,4 +1,4 @@
-//gcc client.c -o listen
+//gcc nc.c -o nc
 
 #include <arpa/inet.h> // inet_addr()
 #include <netdb.h>
@@ -16,18 +16,18 @@ void func(int sockfd)
 	int n;
 	for (;;) {
 		bzero(buff, sizeof(buff));
-		printf("Enter the string : ");
+		printf("Enter the message : ");
 		n = 0;
 		while ((buff[n++] = getchar()) != '\n')
 			;
 		write(sockfd, buff, sizeof(buff));
 		bzero(buff, sizeof(buff));
 		read(sockfd, buff, sizeof(buff));
-		printf("From Server : %s", buff);
-		if ((strncmp(buff, "exit", 4)) == 0) {
-			printf("Client Exit...\n");
-			break;
-		}
+		printf(" %s \n", buff);
+		// if ((strncmp(buff, "exit", 4)) == 0) {
+		// 	printf("Client Exit...\n");
+		// 	break;
+		// }
 	}
 }
 
@@ -51,7 +51,7 @@ int main(int argc , char* argv[])
 		exit(0);
 	}
 	else
-		printf("Socket successfully created..\n");
+	//	printf("Socket successfully created..\n");
 	bzero(&servaddr, sizeof(servaddr));
 
 	// assign IP, PORT
@@ -66,7 +66,7 @@ int main(int argc , char* argv[])
 		exit(0);
 	}
 	else
-		printf("connected to the server..\n");
+		printf("connected to %s port: %s succeed\n" , argv[1] , argv[2]);
 
 	// function for chat
 	func(sockfd);

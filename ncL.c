@@ -1,4 +1,4 @@
-// gcc server.c -o server
+// gcc ncL.c -o nc-L
 
 #include <stdio.h>
 #include <netdb.h>
@@ -24,7 +24,7 @@ void func(int connfd)
 		// read the message from client and copy it in buffer
 		read(connfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
-		printf("From client: %s\t To client : ", buff);
+		printf("From client: %s" , buff);  ///\t To client : ", buff);
 		bzero(buff, MAX);
 		n = 0;
 		// copy server message in the buffer
@@ -35,27 +35,22 @@ void func(int connfd)
 		write(connfd, buff, sizeof(buff));
 
 		// if msg contains "Exit" then server exit and chat ended.
-		if (strncmp("exit", buff, 4) == 0) {
-			printf("Server Exit...\n");
-			break;
-		}
+		// if (strncmp("exit", buff, 4) == 0) {
+		// 	printf("Server Exit...\n");
+		// 	break;
+		// }
 	}
 }
 
 // Driver function
 int main(int argc , char* argv[])
 {
-	if(argc != 3 && argc !=2){
-		perror("Usage : ./ncL [IP] [Port] \n \t or ./ncL [ip] \n");
+	if( argc !=2){
+		perror("Usage : ./ncL [port] \n");
 		exit(1);
 	}
 	uint16_t _port = (uint16_t)atoi(argv[1]);
 	in_addr_t IP = htonl(INADDR_ANY);
-	if(argc == 3){
-		IP = inet_addr(argv[1]);
-		printf("%s", argv[2]);
-		_port = (uint16_t)atoi(argv[2]);
-	}
 
 	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
@@ -66,8 +61,8 @@ int main(int argc , char* argv[])
 		printf("socket creation failed...\n");
 		exit(0);
 	}
-	else
-		printf("Socket successfully created..\n");
+	//else
+	//	printf("Socket successfully created..\n");
 	bzero(&servaddr, sizeof(servaddr));
 
 	// assign IP, PORT
@@ -80,8 +75,8 @@ int main(int argc , char* argv[])
 		printf("socket bind failed...\n");
 		exit(0);
 	}
-	else
-		printf("Socket successfully binded..\n");
+	//else
+	//	printf("Socket successfully binded..\n");
 
 	// Now server is ready to listen and verification
 	if ((listen(sockfd, 5)) != 0) {
@@ -89,7 +84,7 @@ int main(int argc , char* argv[])
 		exit(0);
 	}
 	else
-		printf("Server listening..\n");
+		printf("listening..\n");
 	len = sizeof(cli);
 
 	// Accept the data packet from client and verification
@@ -99,7 +94,7 @@ int main(int argc , char* argv[])
 		exit(0);
 	}
 	else
-		printf("server accept the client...\n");
+		printf("listen to [any] in port %s \n" , argv[1]);
 
 	// Function for chatting between client and server
 	func(connfd);
