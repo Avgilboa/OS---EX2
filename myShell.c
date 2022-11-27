@@ -17,7 +17,7 @@
 void init_shell();
 int Dir();
 int Copy();
-
+int Unix_command();
 
 int main(int argc , char* argv[]){
     init_shell();
@@ -26,6 +26,7 @@ int main(int argc , char* argv[]){
         if(strncmp(command,"exit",4) ==0) break;
         else if(strcmp(command,"DIR") ==0) Dir();
         else if(strncmp(command,"COPY",4) ==0) Copy(command);
+        else Unix_command(command);
 
     }
 
@@ -56,11 +57,8 @@ int Dir(){
 }
 int Copy(char* str)
 {
-    char* src_dest = malloc(sizeof(str));
-    strcpy(src_dest,str);
-    scanf("%s",src_dest);
     char src[128], dest[128];
-    if (src_dest[4]!='<')
+    if (str[4]!='<')
     {
         perror("Usage: COPY<src><dest>");
         exit(1);
@@ -70,14 +68,14 @@ int Copy(char* str)
     
     while (1)
     {
-        src[index++] = src_dest[i++];
-        if (src_dest[i] == '>')
+        src[index++] = str[i++];
+        if (str[i] == '>')
         {
             src[index] = '\0';
             break;
         } 
     }
-    if (src_dest[++i]!='<')
+    if (str[++i]!='<')
     {
         perror("Usage: COPY<src><dest>");
         exit(1);
@@ -86,14 +84,15 @@ int Copy(char* str)
     index=0;
     while (1)
     {
-        dest[index++] = src_dest[i++];
-        if (src_dest[i] == '>')
+        dest[index++] = str[i++];
+        if (str[i] == '>')
         {
             dest[index] = '\0';
             break;
         } 
     }
     
+    //from here its like the previus Ex, copy between two file. 
     int fdsrc;
     int fddst;
     if ((fdsrc = open(src ,O_RDONLY)) < 0) //open file 1 for read
@@ -133,8 +132,20 @@ int Copy(char* str)
             }
         }
     } while (readBytes > 0);
-    free(src_dest);
     close(fdsrc);
     close(fddst);
     return 1;
+}
+int Unix_command(char* str)
+{
+    /*pid_t p1, w;
+    int status;
+    p1=fork();
+    do
+    {
+        w = wait(status);
+        execve(str,argv[1],);
+    } while (!WIFEXITED(status)&&!WIFSIGNALED(status));
+    */
+    printf("%s\n",str);
 }
