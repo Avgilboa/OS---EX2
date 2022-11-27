@@ -6,11 +6,32 @@
 #include <libgen.h>
 #include <string.h>
 
-int main() {
+void init_shell();
+
+
+
+int main(int argc , char* argv[]){
+    init_shell();
+    char* command = malloc(256);
+    while(scanf("%s",command) != EOF){
+        if(strncmp(command,"exit",4) ==0) break;
+        
+    }
+
+
+    free(command);
+    printf("goodbye");
+    return 0;
+
+}
+void init_shell(){
+    printf("------------------------\n  my_shell \n------------------------ \n");
+}
+int Dir(){
     DIR * dir;
     if( (dir =opendir(".")) == NULL){
         perror("cannot open");
-        exit(1);
+        exit(0);
         
     }
     struct dirent * dp;
@@ -20,5 +41,5 @@ int main() {
         printf("%s \n",dp->d_name);
     }
     closedir(dir);
-    return 0;
+    return 1;
 }
