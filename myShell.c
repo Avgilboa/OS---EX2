@@ -140,16 +140,63 @@ int Unix_command(char *str)
     word = strtok(str," ");
     char *newargv[256];
     int i=0;
-    while (word)
+    while (word && strcmp(word,"|"))
     {
         newargv[i++] = word;
         word = strtok(NULL, " ");
     }
     newargv[i] = NULL;
+    if(word)
+    {
+        char baff[1028];
+        pid_t p1;
+        int link[2];
+        if (pipe(link) == -1)
+        {
+            perror("pipe");
+        }
+        p1=fork();
+        if (p1 == 0)
+        {
+            dup2(link[1],STDOUT_FILENO);
+            close(link[0]);
+            close(link[1]);
+            char bin[] = "/bin/";
+            strcat(bin,newargv[0]);
+            execve(bin, newargv,NULL);
+            perror("execve");
+            _exit(0);
+        }
+        else
+        {
+            close(link[1]);
+            int nbytes = read(link[0],baff,sizeof(baff));
+            //wait(NULL);
+        }
+        i=0;
+        word = strtok(NULL, " ");
+        while (word && strcmp(word,"|"))
+        {
+            newargv[i++] = word;
+            word = strtok(NULL, " ");
+        }
+        word = strtok(baff," ");
+        while (word)
+        {
+            newargv[i++] = word;
+            word = strtok(NULL, " ");
+        }
+        newargv[i] = NULL;
+
+    }
+    for ( i = 0; newargv[i] != NULL; i++)
+    {
+        printf("ARG[%d] = %s\n",i,newargv[i]);
+    }
     
-    pid_t p1;
-    p1=fork();
-    if (p1 == 0)
+    pid_t p2;
+    p2=fork();
+    if (p2 == 0)
     {
         char bin[] = "/bin/";
         strcat(bin,newargv[0]);
@@ -157,10 +204,10 @@ int Unix_command(char *str)
         perror("execve");
         _exit(0);
     }
-    else 
+    /*else 
     {
         wait(&p1);
-    }
+    }*/
     return 1;
     
 }
