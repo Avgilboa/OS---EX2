@@ -6,9 +6,6 @@
 #include <libgen.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -31,14 +28,7 @@ int main(int argc , char* argv[]){
         else if(strncmp(command,"DIR",3) ==0) Dir();
         else if(strncmp(command,"COPY",4) ==0) Copy(command);
         
-        else{Unix_command(command);
-            /*char **flags = malloc(256);
-            int i =0;
-            while (scanf("%s",flags[i++])!= '\n');
-            flags[i] = "~~~~~~";
-            Unix_command(command,flags);
-            //free(flag);*/
-        }
+        else Unix_command(command);
     }
     printf("goodbye\n");
     return 0;
