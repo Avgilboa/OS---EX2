@@ -136,14 +136,15 @@ int Copy(char* str)
 }
 int Unix_command(char *str)
 {   
+    printf("Unix_command!!\n");
     char *word;
-    word = strtok(str," ");
+    word = strtok(str,"\t\r\n\v\f ");
     char *newargv[256];
     int i=0;
     while (word && strcmp(word,"|"))
     {
         newargv[i++] = word;
-        word = strtok(NULL, " ");
+        word = strtok(NULL, "\t\r\n\v\f ");
     }
     newargv[i] = NULL;
     if(word)
@@ -173,41 +174,51 @@ int Unix_command(char *str)
             int nbytes = read(link[0],baff,sizeof(baff));
             //wait(NULL);
         }
+        char str_new[1028];
+        bzero(str_new,1028);
         i=0;
         word = strtok(NULL, " ");
-        while (word && strcmp(word,"|"))
-        {
-            newargv[i++] = word;
-            word = strtok(NULL, " ");
-        }
-        word = strtok(baff," ");
+        strcat(str_new,word);
+        word = strtok(NULL, " ");
         while (word)
         {
-            newargv[i++] = word;
+            strcat(str_new,word);
             word = strtok(NULL, " ");
         }
+        strcat(str_new," ");
+        strcat(str_new,baff);
+        word = strtok(baff,"\n");
+        /*while (word)
+        {
+            newargv[i++] = word;
+            word = strtok(NULL, "\n");
+        }*/
+        newargv[i++] = word;
         newargv[i] = NULL;
-
+        Unix_command(str_new);
     }
-    for ( i = 0; newargv[i] != NULL; i++)
+    else
     {
-        printf("ARG[%d] = %s\n",i,newargv[i]);
+        for ( i = 0; newargv[i] != NULL; i++)
+        {
+            printf("ARG[%d] = %s\n",i,newargv[i]);
+        }
+        
+        pid_t p2;
+        p2=fork();
+        if (p2 == 0)
+        {
+            char bin[] = "/bin/";
+            strcat(bin,newargv[0]);
+            execve(bin, newargv,NULL);
+            perror("execve");
+            _exit(0);
+        }
+        /*else 
+        {
+            wait(&p1);
+        }*/
     }
-    
-    pid_t p2;
-    p2=fork();
-    if (p2 == 0)
-    {
-        char bin[] = "/bin/";
-        strcat(bin,newargv[0]);
-        execve(bin, newargv,NULL);
-        perror("execve");
-        _exit(0);
-    }
-    /*else 
-    {
-        wait(&p1);
-    }*/
     return 1;
     
 }
