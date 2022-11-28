@@ -21,17 +21,25 @@ int Unix_command();
 
 int main(int argc , char* argv[]){
     init_shell();
-    char* command = malloc(256);
-    while(scanf("%s",command) != EOF){
+    char command[256];
+
+    while(1){
+        fgets(command,256,stdin);
+        command[strlen(command)-1] = '\0';
+     
         if(strncmp(command,"exit",4) ==0) break;
-        else if(strcmp(command,"DIR") ==0) Dir();
+        else if(strncmp(command,"DIR",3) ==0) Dir();
         else if(strncmp(command,"COPY",4) ==0) Copy(command);
-        else Unix_command(command);
-
+        
+        else{Unix_command(command);
+            /*char **flags = malloc(256);
+            int i =0;
+            while (scanf("%s",flags[i++])!= '\n');
+            flags[i] = "~~~~~~";
+            Unix_command(command,flags);
+            //free(flag);*/
+        }
     }
-
-
-    free(command);
     printf("goodbye\n");
     return 0;
 
@@ -136,16 +144,25 @@ int Copy(char* str)
     close(fddst);
     return 1;
 }
-int Unix_command(char* str, char **env)
-{
-    char *newargv[] = {NULL,NULL};
-    newargv[0] = str;
+int Unix_command(char *str)
+{   
+    char *word;
+    word = strtok(str," ");
+    char *newargv[256];
+    int i=0;
+    while (word)
+    {
+        newargv[i++] = word;
+        word = strtok(NULL, " ");
+    }
+    newargv[i] = NULL;
+    
     pid_t p1;
     p1=fork();
     if (p1 == 0)
     {
         char bin[] = "/bin/";
-        strcat(bin,str);
+        strcat(bin,newargv[0]);
         execve(bin, newargv,NULL);
         perror("execve");
         _exit(0);
