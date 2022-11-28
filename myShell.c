@@ -136,16 +136,24 @@ int Copy(char* str)
     close(fddst);
     return 1;
 }
-int Unix_command(char* str)
+int Unix_command(char* str, char **env)
 {
-    /*pid_t p1, w;
-    int status;
+    char *newargv[] = {NULL,NULL};
+    newargv[0] = str;
+    pid_t p1;
     p1=fork();
-    do
+    if (p1 == 0)
     {
-        w = wait(status);
-        execve(str,argv[1],);
-    } while (!WIFEXITED(status)&&!WIFSIGNALED(status));
-    */
-    printf("%s\n",str);
+        char bin[] = "/bin/";
+        strcat(bin,str);
+        execve(bin, newargv,NULL);
+        perror("execve");
+        _exit(0);
+    }
+    else 
+    {
+        wait(&p1);
+    }
+    return 1;
+    
 }
