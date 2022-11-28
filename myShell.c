@@ -28,9 +28,16 @@ int main(int argc , char* argv[]){
         else if(strncmp(command,"DIR",3) ==0) Dir();
         else if(strncmp(command,"COPY",4) ==0) Copy(command);
         
-        else Unix_command(command);
+        else
+        { 
+            Unix_command(command, NULL);
+        }
     }
     printf("goodbye\n");
+    FILE *f1 = fopen("out.txt", "w");
+    fclose(f1);
+    char *newargv2[] = {"rm","out.txt",NULL};
+    execve("/bin/rm", newargv2,NULL);
     return 0;
 
 }
@@ -134,24 +141,28 @@ int Copy(char* str)
     close(fddst);
     return 1;
 }
-int Unix_command(char *str)
+int Unix_command(char *str, char *in)
 {   
-    printf("Unix_command!!\n");
     char *word;
-    word = strtok(str,"\t\r\n\v\f ");
+    word = strtok(str," ");
     char *newargv[256];
     int i=0;
     while (word && strcmp(word,"|"))
     {
         newargv[i++] = word;
-        word = strtok(NULL, "\t\r\n\v\f ");
+        word = strtok(NULL, " ");
+    }
+    if(in) // if thier is input set the last newargv like stdin
+    {
+        newargv[i++] = in;
     }
     newargv[i] = NULL;
-    if(word)
+    if(word) //if word = |
     {
-        char baff[1028];
-        pid_t p1;
-        int link[2];
+        char buff[1028]; //to read the first out
+        bzero(buff,1028);//clean the buff
+        pid_t p1; // fork
+        int link[2]; //pipe
         if (pipe(link) == -1)
         {
             perror("pipe");
@@ -159,24 +170,25 @@ int Unix_command(char *str)
         p1=fork();
         if (p1 == 0)
         {
-            dup2(link[1],STDOUT_FILENO);
+            dup2(link[1],STDOUT_FILENO);//put the output in link[1]
             close(link[0]);
             close(link[1]);
             char bin[] = "/bin/";
             strcat(bin,newargv[0]);
-            execve(bin, newargv,NULL);
-            perror("execve");
+            execve(bin, newargv,NULL); // run the first program
+            perror("execve"); //only if have error
             _exit(0);
         }
         else
         {
             close(link[1]);
-            int nbytes = read(link[0],baff,sizeof(baff));
+            int nbytes = read(link[0],buff,sizeof(buff)); //read the output to buff
             //wait(NULL);
         }
-        char str_new[1028];
-        bzero(str_new,1028);
+        char str_new[1028]; //send new command in recu with the ew innput
+        bzero(str_new,1028);//clean the new string
         i=0;
+        //save the command to the new string
         word = strtok(NULL, " ");
         strcat(str_new,word);
         word = strtok(NULL, " ");
@@ -185,25 +197,16 @@ int Unix_command(char *str)
             strcat(str_new,word);
             word = strtok(NULL, " ");
         }
-        strcat(str_new," ");
-        strcat(str_new,baff);
-        word = strtok(baff,"\n");
-        /*while (word)
-        {
-            newargv[i++] = word;
-            word = strtok(NULL, "\n");
-        }*/
-        newargv[i++] = word;
-        newargv[i] = NULL;
-        Unix_command(str_new);
+        //open temp file for the input
+        fclose(fopen("out.txt","w")); //clean the file
+        FILE *f1;
+        f1 = fopen("out.txt","w");
+        fprintf(f1,"%s",buff);        
+        Unix_command(str_new, "out.txt");
+        fclose(f1);
     }
     else
     {
-        for ( i = 0; newargv[i] != NULL; i++)
-        {
-            printf("ARG[%d] = %s\n",i,newargv[i]);
-        }
-        
         pid_t p2;
         p2=fork();
         if (p2 == 0)
@@ -219,6 +222,8 @@ int Unix_command(char *str)
             wait(&p1);
         }*/
     }
+    
+    
     return 1;
     
 }
