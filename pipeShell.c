@@ -1,4 +1,4 @@
-// gcc myShell.c -o shell
+// gcc pipeShell.c -o Pshell
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -146,7 +146,7 @@ int Unix_command(char *str, char *in)
     word = strtok(str," ");
     char *newargv[256];
     int i=0;
-    while (word && strcmp(word,"|")&& strcmp(word,"<")&& strcmp(word,">"))
+    while (word && strcmp(word,"|")!=0&& strcmp(word,"<")!=0&& strcmp(word,">")!=0)
     {
         newargv[i++] = word;
         word = strtok(NULL, " ");
@@ -156,7 +156,7 @@ int Unix_command(char *str, char *in)
         newargv[i++] = in;
     }
     newargv[i] = NULL;
-    if(word && strcmp(word,"|") != 0) //if word = |
+    if(word && (strcmp(word,"|") == 0 || strcmp(word,">") == 0)) //if word = |
     {
         char buff[1028]; //to read the first out
         bzero(buff,1028);//clean the buff
@@ -184,38 +184,47 @@ int Unix_command(char *str, char *in)
             int nbytes = read(link[0],buff,sizeof(buff)); //read the output to buff
             //wait(NULL);
         }
-        char str_new[1028]; //send new command in recu with the ew innput
-        bzero(str_new,1028);//clean the new string
-        i=0;
-        //save the command to the new string
-        word = strtok(NULL, " ");
-        strcat(str_new,word);
-        strcat(str_new," ");
-        word = strtok(NULL, " ");
-        while (word)
+        if (strcmp(word,">")==0)
         {
+            word = strtok(NULL, " ");
+            FILE *fddst ;
+            fddst= fopen(word,"w");
+            fprintf(fddst,"%s",buff); 
+            fclose(fddst);
+        }
+        else
+        {
+            char str_new[1028]; //send new command in recu with the ew innput
+            bzero(str_new,1028);//clean the new string
+            i=0;
+            //save the command to the new string
+            word = strtok(NULL, " ");
             strcat(str_new,word);
             strcat(str_new," ");
             word = strtok(NULL, " ");
+            while (word)
+            {
+                strcat(str_new,word);
+                strcat(str_new," ");
+                word = strtok(NULL, " ");
+            }
+            //open temp file for the input
+            fclose(fopen("out.txt","w")); //clean the file
+            FILE *f1;
+            f1 = fopen("out.txt","w");
+            fprintf(f1,"%s",buff);        
+            Unix_command(str_new, "out.txt");
+            fclose(f1);
         }
-        //open temp file for the input
-        fclose(fopen("out.txt","w")); //clean the file
-        FILE *f1;
-        f1 = fopen("out.txt","w");
-        fprintf(f1,"%s",buff);        
-        Unix_command(str_new, "out.txt");
-        fclose(f1);
-    }
-    else if (word && strcmp(word,">") != 0)
-    {
-        /* code */
-    }
-    else if (word && strcmp(word,"<") != 0)
-    {
-        /* code */
     }
     else
     {
+        if (word && strcmp(word,"<") == 0)
+        {
+            word = strtok(NULL, " ");
+            newargv[i++] = word;
+            newargv[i] = NULL;
+        }   
         pid_t p2;
         p2=fork();
         if (p2 == 0)
