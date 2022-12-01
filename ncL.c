@@ -20,25 +20,26 @@ void func(int connfd)
 	// infinite loop for chat
 	for (;;) {
 		bzero(buff, MAX);
+		int pid1 = fork();
+		if(pid1 == 0){
+			if (read(connfd, buff, sizeof(buff)) >0){
+				printf("From client: %s" , buff);  ///t To client : ", buff);
+				bzero(buff, MAX);
+			}
+			// print buffer which contains the client contents
 
-		// read the message from client and copy it in buffer
-		read(connfd, buff, sizeof(buff));
-		// print buffer which contains the client contents
-		printf("From client: %s" , buff);  ///\t To client : ", buff);
-		bzero(buff, MAX);
-		n = 0;
-		// copy server message in the buffer
-		while ((buff[n++] = getchar()) != '\n')
-			;
+		} 
+		else
+		{
+			bzero(buff, MAX);
+			n = 0;
+			// copy server message in the buffer
+			while ((buff[n++] = getchar()) != '\n');
+			// and send that buffer to client
+			write(connfd, buff, sizeof(buff));
+		}
+		
 
-		// and send that buffer to client
-		write(connfd, buff, sizeof(buff));
-
-		// if msg contains "Exit" then server exit and chat ended.
-		// if (strncmp("exit", buff, 4) == 0) {
-		// 	printf("Server Exit...\n");
-		// 	break;
-		// }
 	}
 }
 

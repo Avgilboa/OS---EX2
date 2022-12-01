@@ -16,18 +16,23 @@ void func(int sockfd)
 	int n;
 	for (;;) {
 		bzero(buff, sizeof(buff));
-		printf("Enter the message : ");
-		n = 0;
-		while ((buff[n++] = getchar()) != '\n')
-			;
-		write(sockfd, buff, sizeof(buff));
-		bzero(buff, sizeof(buff));
-		read(sockfd, buff, sizeof(buff));
-		printf(" %s \n", buff);
-		// if ((strncmp(buff, "exit", 4)) == 0) {
-		// 	printf("Client Exit...\n");
-		// 	break;
-		// }
+		
+		int pid1 = fork();
+		if(pid1 == 0){
+			bzero(buff, sizeof(buff));
+			if((read(sockfd, buff, sizeof(buff)))>0){
+				printf(" %s", buff);
+				bzero(buff, sizeof(buff));
+			}
+
+		}
+		else{
+			n = 0;
+			while ((buff[n++] = getchar()) != '\n');
+			write(sockfd, buff, sizeof(buff));
+		}
+	
+		
 	}
 }
 
