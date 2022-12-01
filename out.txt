@@ -1,7 +1,0 @@
-myShell.c
-mytee.c
-nc.c
-ncL.c
-out.txt
-pipeShell.c
-shell
