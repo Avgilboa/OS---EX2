@@ -1,4 +1,4 @@
-// gcc pipeShell.c -o Pshell
+// gcc myShell.c -o Pshell
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -12,7 +12,7 @@
 #include<limits.h>
 #include <sys/wait.h>
 
-void init_shell();
+int init_shell();
 int Dir();
 int Copy();
 int Unix_command();
@@ -20,54 +20,55 @@ int pip();
 int redirect();
 
 int main(int argc , char* argv[]){
-    init_shell();
+    
+    init_shell(NULL);
+    printf("goodbye\n");
+    return 0;
+}
+int init_shell(char *str)
+{
     char command[256];
-     //// > < | { }   Dir | wc > file1.txt
-    //while()
+    bzero(command,256);
+    if (!str)
+    {
         fgets(command,256,stdin);
         command[strlen(command)-1];
-        if( strchr(command , '|') ){
-            char* word;
-            char left[256] = {'\0'};
-            char right[256] = {'\0'};
-            word = strtok(command," | ");  // ls -l
-
-            strcpy(left, word);
-            word = strtok(NULL,"\n");
-            strcpy(right, &(word[2]));
-            //printf("the second command is : %s \n" , right);
-            pip(left, right);
-  
-        }
-        //if(strncmp(command,"exit",4) ==0) break;
-
-        else if(strncmp(command,"DIR",3) ==0) Dir();
-        else if(strncmp(command,"COPY",4) ==0) Copy(command);
-        
-        else
-        { 
-            Unix_command(command);
-        }
-        bzero(command, 256);
-
-    printf("goodbye\n");
-    // FILE *f1 = fopen("out.txt", "w");
-    // fclose(f1);
-    // char *newargv2[] = {"rm","out.txt",NULL};
-    // execve("/bin/rm", newargv2,NULL);
-    return 0;
-
+    }
+    else strcpy(command,str);
+    if( strchr(command , '|') ){
+        char* word;
+        char left[256] = {'\0'};
+        char right[256] = {'\0'};
+        word = strtok(command," | ");  // ls -l
+        strcpy(left, word);
+        word = strtok(NULL,"\n");
+        strcpy(right, &(word[2]));
+        pip(left, right);
+        return 1;
+    }
+    else if(strncmp(command,"DIR",3) ==0){
+        Dir();
+        return 1;
+    }
+    else if(strncmp(command,"COPY",4) ==0) {
+        Copy(command);
+        return 1;
+    }
+    else
+    { 
+        char * word;
+        word = strtok(command,"\n");
+        Unix_command(command);
+        return 1;
+    }
+    bzero(command, 256);
+    return 1;
 }
 int redirect(char* str , char* filename ){
     int fd[2];
-    fd[1]
-    func(str)
-    write(name, fd[0], 1024);
-}
-
-
-void init_shell(){
-    printf("------------------------\n  my_shell \n------------------------ \n");
+    fd[1];
+    init_shell(str);
+    //write(name, fd[0], 1024);
 }
 int Dir(){
     DIR * dir;
@@ -210,34 +211,31 @@ int pip(char* lft , char* right){
 
 int Unix_command(char *str)
 {   
+    //printf("str is : %s",str);
     char *word;
-    char *newargv[256];
-    int i=0, pid1;
-
     word = strtok(str," ");
+    char *newargv[256];
+    int i=0;
     while (word)
     {
         newargv[i++] = word;
         word = strtok(NULL, " ");
     }
-    if((pid1 = fork()) < 0){
-        perror("fork");
-        exit(2);
-    }
-    if(pid1 ==0 ){
-        newargv[i] = NULL;
+    newargv[i] = NULL;
+    pid_t p2;
+    p2=fork();
+    if (p2 == 0)
+    {
         char bin[] = "/bin/";
         strcat(bin,newargv[0]);
-        execve(bin, newargv,NULL); // run the first program
-        perror("execve"); //only if have error
-        _exit(2);
+        execve(bin, newargv,NULL);
+        perror("execve");
+        _exit(0);
     }
-    else{
+    else 
+    {
         wait(NULL);
-        return 1;
     }
-    
-    return 0;
-    
+    return 1;
     
 }
