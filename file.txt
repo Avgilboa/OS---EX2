@@ -1,3 +1,4 @@
+}.c
 file.txt
 jj.c
 myShell.c
@@ -6,4 +7,3 @@ nc.c
 ncL.c
 pip
 pipeShell.c
-}.c

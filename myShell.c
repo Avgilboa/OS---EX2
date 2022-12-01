@@ -44,20 +44,19 @@ int init_shell(char *str)
         strcpy(left, word);
         word = strtok(NULL,"\n");
         strcpy(right, &(word[1]));
+        printf("left is: %s\n right is: %s\n",left,right);
         redirect(left, right);
-        return 0;
     }
 
     else if (strchr(command, '<')){
         char* word;
         char left[256] = {'\0'};
         char right[256] = {'\0'};
-        word = strtok(command," < ");  // ls -l
+        word = strtok(command,"<");  // ls -l
         strcpy(left, word);
         word = strtok(NULL,"\n");
-        strcpy(right, &(word[2]));
+        strcpy(right, &(word[1]));
         direct(left, right);
-        return 0;
     }
 
     else if( strchr(command , '|') ){
@@ -68,6 +67,7 @@ int init_shell(char *str)
 
         strcpy(left, word);
         word = strtok(NULL,"\n");
+        printf("the command is: %s\n",word);
         strcpy(right, &(word[2]));
         //printf("the second command is : %s \n" , right);
         pip(left, right);
@@ -84,13 +84,10 @@ int init_shell(char *str)
         char* word;
         word = strtok(command,"\n");
         Unix_command(word);
-        return 0;
     }
     bzero(command, 256);
     wait(NULL);
     return 0;
-
-    
 }
 int redirect(char* str , char* filename ){
     int fd[2];
@@ -109,21 +106,18 @@ int direct(char* str , char* filename ){
     int fd[2];
     pipe(fd);
     char source[1024] = {'\0'};
-    int file = open(filename, O_RDONLY);
-    // char ch;
-    // if(fp != NULL)
-    // {
-    //     while( (ch = (getc(fp)) ) != EOF)
-    //     {
-    //         strcat(source, &ch);
-    //     }
-    //     fclose(fp);
-        // write(fd[1], source , 1024);
-        dup2(file, STDIN_FILENO);
-        close(fd[1]);
-        close(fd[0]);
-        init_shell(str);
- //   }
+    int f1;
+    if ((f1 = open(filename ,O_RDONLY)) < 0) //open file 1 for read
+    {
+        printf("%s\n",filename);
+        perror(" cant open sorce file");
+        exit(1);
+    }
+    dup2(f1, STDIN_FILENO);
+    close(fd[1]);
+    close(fd[0]);
+    init_shell(str);
+    
 
 }
 
@@ -237,7 +231,7 @@ int pip(char* lft , char* right){
             Dir();
         }
         else{
-            init_shell(lft);
+            Unix_command(lft);
         }
         close(fd[1]);
     }
@@ -254,11 +248,11 @@ int pip(char* lft , char* right){
             // printf("%s\n", buff);
             close(fd[0]);
 
-            if(strcmp(right, "DIR") == 0){
-                Dir();
+            if(strcmp(lft, "DIR") == 0){
+            Dir();
             }
             else{
-                init_shell(right);
+                Unix_command(right);
             }
             
             
