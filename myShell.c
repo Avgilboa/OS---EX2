@@ -40,11 +40,12 @@ int init_shell(char *str)
         char* word;
         char left[256] = {'\0'};
         char right[256] = {'\0'};
-        word = strtok(command," > ");  // ls -l
+        word = strtok(command,">");  // ls -l
         strcpy(left, word);
         word = strtok(NULL,"\n");
-        strcpy(right, &(word[2]));
+        strcpy(right, &(word[1]));
         redirect(left, right);
+        return 0;
     }
 
     else if (strchr(command, '<')){
@@ -56,6 +57,7 @@ int init_shell(char *str)
         word = strtok(NULL,"\n");
         strcpy(right, &(word[2]));
         direct(left, right);
+        return 0;
     }
 
     else if( strchr(command , '|') ){
@@ -82,6 +84,7 @@ int init_shell(char *str)
         char* word;
         word = strtok(command,"\n");
         Unix_command(word);
+        return 0;
     }
     bzero(command, 256);
     wait(NULL);
@@ -106,21 +109,21 @@ int direct(char* str , char* filename ){
     int fd[2];
     pipe(fd);
     char source[1024] = {'\0'};
-    FILE *fp = fopen(filename, "r");
-    char ch;
-    if(fp != NULL)
-    {
-        while( (ch = (getc(fp)) ) != EOF)
-        {
-            strcat(source, &ch);
-        }
-        fclose(fp);
-        write(fd[1], source , 1024);
-        dup2(fd[0], STDIN_FILENO);
+    int file = open(filename, O_RDONLY);
+    // char ch;
+    // if(fp != NULL)
+    // {
+    //     while( (ch = (getc(fp)) ) != EOF)
+    //     {
+    //         strcat(source, &ch);
+    //     }
+    //     fclose(fp);
+        // write(fd[1], source , 1024);
+        dup2(file, STDIN_FILENO);
         close(fd[1]);
         close(fd[0]);
-        Unix_command(str);
-    }
+        init_shell(str);
+ //   }
 
 }
 
@@ -234,7 +237,7 @@ int pip(char* lft , char* right){
             Dir();
         }
         else{
-            Unix_command(lft);
+            init_shell(lft);
         }
         close(fd[1]);
     }
@@ -251,11 +254,11 @@ int pip(char* lft , char* right){
             // printf("%s\n", buff);
             close(fd[0]);
 
-            if(strcmp(lft, "DIR") == 0){
-            Dir();
+            if(strcmp(right, "DIR") == 0){
+                Dir();
             }
             else{
-                Unix_command(right);
+                init_shell(right);
             }
             
             
