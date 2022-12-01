@@ -19,7 +19,7 @@ int Unix_command();
 int main(int argc , char* argv[]){
     init_shell();
     char command[256];
-
+     //// > < | { }   Dir | wc < file1.txt
     while(1){
         fgets(command,256,stdin);
         command[strlen(command)-1] = '\0';
@@ -209,12 +209,9 @@ int Unix_command(char *str, char *in)
                 word = strtok(NULL, " ");
             }
             //open temp file for the input
-            fclose(fopen("out.txt","w")); //clean the file
-            FILE *f1;
-            f1 = fopen("out.txt","w");
-            fprintf(f1,"%s",buff);        
-            Unix_command(str_new, "out.txt");
-            fclose(f1);
+            fclose(fopen("out.txt","w")); //clean the fill
+            dup2(link[0], STDIN_FILENO);
+
         }
     }
     else

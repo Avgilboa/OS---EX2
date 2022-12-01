@@ -1,4 +1,4 @@
-// gcc pipeShell.c -o Pshell
+// gcc myShell.c -o Pshell
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -12,7 +12,7 @@
 #include<limits.h>
 #include <sys/wait.h>
 
-void init_shell();
+int init_shell();
 int Dir();
 int Copy();
 int Unix_command();
@@ -21,10 +21,17 @@ int redirect();
 int direct();
 
 int main(int argc , char* argv[]){
-    init_shell();
+    
+    init_shell(NULL);
+    printf("goodbye\n");
+    return 0;
+}
+int init_shell(char *str)
+{
     char command[256];
-     //// > < | { }   Dir | wc > file1.txt
-    //while()
+    bzero(command,256);
+    if (!str)
+    {
         fgets(command,256,stdin);
         command[strlen(command)-1];
 
@@ -84,6 +91,7 @@ int main(int argc , char* argv[]){
     // execve("/bin/rm", newargv2,NULL);
     return 0;
 
+    }
 }
 int redirect(char* str , char* filename ){
     int fd[2];
@@ -120,10 +128,6 @@ int direct(char* str , char* filename ){
 
 }
 
-
-void init_shell(){
-    printf("------------------------\n  my_shell \n------------------------ \n");
-}
 int Dir(){
     DIR * dir;
     if( (dir =opendir(".")) == NULL){
@@ -266,11 +270,11 @@ int pip(char* lft , char* right){
 
 int Unix_command(char *str)
 {   
+    //printf("str is : %s",str);
     char *word;
-    char *newargv[256];
-    int i=0, pid1;
-
     word = strtok(str," ");
+    char *newargv[256];
+    int i=0 , pid1;
     while (word)
     {
         newargv[i++] = word;
@@ -289,12 +293,10 @@ int Unix_command(char *str)
         perror("execve"); //only if have error
         _exit(2);
     }
-    else{
+    else 
+    {
         wait(NULL);
-        return 1;
     }
-    
-    return 0;
-    
+    return 1;
     
 }
