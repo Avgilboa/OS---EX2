@@ -34,75 +34,71 @@ int init_shell(char *str)
     {
         fgets(command,256,stdin);
         command[strlen(command)-1];
+    }
+    else strcpy(command,str);
+    if (strchr(command, '>')){
+        char* word;
+        char left[256] = {'\0'};
+        char right[256] = {'\0'};
+        word = strtok(command," > ");  // ls -l
+        strcpy(left, word);
+        word = strtok(NULL,"\n");
+        strcpy(right, &(word[2]));
+        redirect(left, right);
+    }
 
-        if (strchr(command, '>')){
-            char* word;
-            char left[256] = {'\0'};
-            char right[256] = {'\0'};
-            word = strtok(command," > ");  // ls -l
-            strcpy(left, word);
-            word = strtok(NULL,"\n");
-            strcpy(right, &(word[2]));
-            redirect(left, right);
-        }
+    else if (strchr(command, '<')){
+        char* word;
+        char left[256] = {'\0'};
+        char right[256] = {'\0'};
+        word = strtok(command," < ");  // ls -l
+        strcpy(left, word);
+        word = strtok(NULL,"\n");
+        strcpy(right, &(word[2]));
+        direct(left, right);
+    }
 
-        else if (strchr(command, '<')){
-            char* word;
-            char left[256] = {'\0'};
-            char right[256] = {'\0'};
-            word = strtok(command," < ");  // ls -l
-            strcpy(left, word);
-            word = strtok(NULL,"\n");
-            strcpy(right, &(word[2]));
-            direct(left, right);
-        }
+    else if( strchr(command , '|') ){
+        char* word;
+        char left[256] = {'\0'};
+        char right[256] = {'\0'};
+        word = strtok(command," | ");  // ls -l
 
-        else if( strchr(command , '|') ){
-            char* word;
-            char left[256] = {'\0'};
-            char right[256] = {'\0'};
-            word = strtok(command," | ");  // ls -l
-
-            strcpy(left, word);
-            word = strtok(NULL,"\n");
-            strcpy(right, &(word[2]));
-            //printf("the second command is : %s \n" , right);
-            pip(left, right);
-            return 0;
-  
-        }
-        //if(strncmp(command,"exit",4) ==0) break;
-
-        else if(strncmp(command,"DIR",3) ==0) Dir();
-        else if(strncmp(command,"COPY",4) ==0) Copy(command);
-        
-        else
-        { 
-            char* word;
-            word = strtok(command,"\n");
-            Unix_command(word);
-        }
-        bzero(command, 256);
-        wait(NULL);
-
-    // FILE *f1 = fopen("out.txt", "w");
-    // fclose(f1);
-    // char *newargv2[] = {"rm","out.txt",NULL};
-    // execve("/bin/rm", newargv2,NULL);
-    return 0;
+        strcpy(left, word);
+        word = strtok(NULL,"\n");
+        strcpy(right, &(word[2]));
+        //printf("the second command is : %s \n" , right);
+        pip(left, right);
+        return 0;
 
     }
+    //if(strncmp(command,"exit",4) ==0) break;
+
+    else if(strncmp(command,"DIR",3) ==0) Dir();
+    else if(strncmp(command,"COPY",4) ==0) Copy(command);
+    
+    else
+    { 
+        char* word;
+        word = strtok(command,"\n");
+        Unix_command(word);
+    }
+    bzero(command, 256);
+    wait(NULL);
+    return 0;
+
+    
 }
 int redirect(char* str , char* filename ){
     int fd[2];
     pipe(fd);
     dup2(fd[1], STDOUT_FILENO);
-    Unix_command(str);
+    init_shell(str);
     char buff[1024] = {'\0'};
     read(fd[0], buff, 1024);
     FILE *file = fopen(filename, "w");
 
-    int results = fputs(buff, file);
+    fprintf(file,"%s",buff);
     fclose(file);
     return 1;
 }
