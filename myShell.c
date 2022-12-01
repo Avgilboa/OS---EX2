@@ -59,6 +59,27 @@ int init_shell(char *str)
         direct(left, right);
     }
 
+    else if(strchr(command,'{')) //only port
+    {
+        char *word;
+        word = strtok(command,"{");
+        //server(word[1]);
+    }
+    else if (strchr(command,'}'))
+    {
+        char *word;
+        char comm[256], port[256], ip[256];
+        word = strtok(command,"}");
+        strcpy(comm,word);
+        word = strtok(NULL,":");
+        strcpy(ip,&word[1]);
+        word = strtok(NULL," ");
+        strcpy(port,word);
+        printf("command is:%s\nip is:%s\nport is:%s",comm,ip,port);
+        //client(comm,ip,port);
+
+    }
+
     else if( strchr(command , '|') ){
         char* word;
         char left[256] = {'\0'};
@@ -75,7 +96,8 @@ int init_shell(char *str)
 
     }
     //if(strncmp(command,"exit",4) ==0) break;
-
+    
+    
     else if(strncmp(command,"DIR",3) ==0) Dir();
     else if(strncmp(command,"COPY",4) ==0) Copy(command);
     
