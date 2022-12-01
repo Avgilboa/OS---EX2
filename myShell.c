@@ -11,6 +11,13 @@
 #include <sys/stat.h>
 #include<limits.h>
 #include <sys/wait.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h> // read(), write(), close()
+#define MAX 80
+//#define PORT 8080
+#define SA struct sockaddr
 
 int init_shell();
 int Dir();
@@ -19,10 +26,19 @@ int Unix_command();
 int pip();
 int redirect();
 int direct();
+int client(char* command , char* ip , char* port); // }
+void funclient();
+int server(char* port) ; //{ 
+void funcserv();
 
 int main(int argc , char* argv[]){
-    
-    init_shell(NULL);
+    if(strcmp(argv[1], "s") == 0){
+        server("5555");
+    }
+    else if(strcmp(argv[1], "c") == 0){
+        client("ls -l", "127.0.0.1", "5555");
+    }
+    //init_shell(NULL);
     printf("goodbye\n");
     return 0;
 }
@@ -67,7 +83,7 @@ int init_shell(char *str)
 
         strcpy(left, word);
         word = strtok(NULL,"\n");
-        printf("the command is: %s\n",word);
+
         strcpy(right, &(word[2]));
         //printf("the second command is : %s \n" , right);
         pip(left, right);
@@ -120,7 +136,6 @@ int direct(char* str , char* filename ){
     
 
 }
-
 int Dir(){
     DIR * dir;
     if( (dir =opendir(".")) == NULL){
@@ -293,3 +308,164 @@ int Unix_command(char *str)
     return 1;
     
 }
+
+
+
+void funcserv(int connfd)
+{
+	char buff[MAX];
+	int n;
+	// infinite loop for chat
+	for (;;) {
+		bzero(buff, MAX);
+		int pid1 = fork();
+		if(pid1 == 0){
+			if (read(connfd, buff, sizeof(buff)) >0){
+				printf("%s" , buff);  ///t To client : ", buff);
+				bzero(buff, MAX);
+			}
+			// print buffer which contains the client contents
+
+		} 
+		else
+		{
+			bzero(buff, MAX);
+			n = 0;
+			// copy server message in the buffer
+			while ((buff[n++] = getchar()) != '\n');
+			// and send that buffer to client
+			write(connfd, buff, sizeof(buff));
+		}
+		
+
+	}
+}
+
+
+
+int server(char* port){
+    uint16_t _port = (uint16_t)atoi(port);
+	in_addr_t IP = htonl(INADDR_ANY);
+
+	int sockfd, connfd, len;
+	struct sockaddr_in servaddr, cli;
+
+	// socket create and verification
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd == -1) {
+		printf("socket creation failed...\n");
+		exit(0);
+	}
+	//else
+	//	printf("Socket successfully created..\n");
+	bzero(&servaddr, sizeof(servaddr));
+
+	// assign IP, PORT
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = IP ;//htonl(INADDR_ANY);
+	servaddr.sin_port = _port;
+
+	// Binding newly created socket to given IP and verification
+	if ((bind(sockfd, (SA*)&servaddr, sizeof(servaddr))) != 0) {
+		printf("socket bind failed...\n");
+		exit(0);
+	}
+	//else
+	//	printf("Socket successfully binded..\n");
+
+	// Now server is ready to listen and verification
+	if ((listen(sockfd, 5)) != 0) {
+		printf("Listen failed...\n");
+		exit(0);
+	}
+	else
+		printf("listening..\n");
+	len = sizeof(cli);
+
+	// Accept the data packet from client and verification
+	connfd = accept(sockfd, (SA*)&cli, &len);
+	if (connfd < 0) {
+		printf("server accept failed...\n");
+		exit(0);
+	}
+	else
+		printf("listen to [any] in port %s \n" , argv[1]);
+
+	// Function for chatting between client and server
+	func(connfd);
+
+	// After chatting close the socket
+	close(sockfd);
+}
+
+
+
+
+
+void funclient(int sockfd , char* command){
+	char buff[MAX];
+	int n;
+	for (;;) {
+		bzero(buff, sizeof(buff));
+		
+		int pid1 = fork();
+		if(pid1 == 0){
+			bzero(buff, sizeof(buff));
+			if((read(sockfd, buff, sizeof(buff)))>0){
+				printf("%s", buff);
+				bzero(buff, sizeof(buff));
+			}
+
+		}
+		else{
+			n = 0;
+			while ((buff[n++] = getchar()) != '\n');
+			write(sockfd, buff, sizeof(buff));
+		}
+	
+		
+	}
+}
+
+
+int client(char* command, char* ip , char* port){
+	uint16_t _port = (uint16_t)atoi(port);
+	in_addr_t IP = inet_addr(ip);
+	int sockfd, connfd;
+	struct sockaddr_in servaddr, cli;
+
+	// socket create and verification
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd == -1) {
+		printf("socket creation failed...\n");
+		exit(0);
+	}
+	else
+	//	printf("Socket successfully created..\n");
+	bzero(&servaddr, sizeof(servaddr));
+
+	// assign IP, PORT
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = IP;
+	servaddr.sin_port = _port;
+
+	// connect the client socket to server socket
+	if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr))
+		!= 0) {
+		printf("connection with the server failed...\n");
+		exit(0);
+	}
+	else
+		printf("connected to %s port: %s succeed\n" , ip , port);
+
+	// function for chat
+	funclient(sockfd);
+
+	// close the socket
+	close(sockfd);
+}
+
+
+
+		
+

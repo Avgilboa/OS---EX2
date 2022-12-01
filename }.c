@@ -1,4 +1,4 @@
-// gcc ncL.c -o nc-L
+// gcc ncL.c -o nc-L  
 
 #include <stdio.h>
 #include <netdb.h>
