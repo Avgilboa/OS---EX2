@@ -18,30 +18,34 @@ void func(int connfd)
 	char buff[MAX];
 	int n;
 	// infinite loop for chat
-	for (;;) {
-		bzero(buff, MAX);
-		int pid1 = fork();
+	bzero(buff, MAX);
+	int pid1;
+	if((pid1 = fork()) < 0){
+		perror("fork!");
+		exit(2);
+	}
 		if(pid1 == 0){
-			if (read(connfd, buff, sizeof(buff)) >0){
-				printf("From client: %s" , buff);  ///t To client : ", buff);
+			for(;;){
+				if (read(connfd, buff, sizeof(buff)) >0){
+				printf("%s" , buff);  ///t To client : ", buff);
 				bzero(buff, MAX);
+			}// print buffer which contains the client content
 			}
-			// print buffer which contains the client contents
-
-		} 
+		}
 		else
 		{
-			bzero(buff, MAX);
-			n = 0;
-			// copy server message in the buffer
-			while ((buff[n++] = getchar()) != '\n');
-			// and send that buffer to client
-			write(connfd, buff, sizeof(buff));
+			for(;;){
+				bzero(buff, MAX);
+				n = 0;
+				// copy server message in the buffer
+				while ((buff[n++] = getchar()) != '\n');
+				// and send that buffer to client
+				write(connfd, buff, sizeof(buff));
+			}
 		}
 		
 
 	}
-}
 
 // Driver function
 int main(int argc , char* argv[])

@@ -14,27 +14,29 @@ void func(int sockfd)
 {
 	char buff[MAX];
 	int n;
-	for (;;) {
-		bzero(buff, sizeof(buff));
-		
-		int pid1 = fork();
+	bzero(buff, sizeof(buff));
+	int pid1;
+	if((pid1 = fork()) < 0){
+		perror("fork");
+		exit(2);
+	}
 		if(pid1 == 0){
-			bzero(buff, sizeof(buff));
-			if((read(sockfd, buff, sizeof(buff)))>0){
-				printf(" %s", buff);
+			for(;;){
 				bzero(buff, sizeof(buff));
+				if((read(sockfd, buff, sizeof(buff)))>0){
+					printf("%s", buff);
+					bzero(buff, sizeof(buff));
+				}
 			}
-
 		}
 		else{
-			n = 0;
-			while ((buff[n++] = getchar()) != '\n');
-			write(sockfd, buff, sizeof(buff));
+			for(;;){
+				n = 0;
+				while ((buff[n++] = getchar()) != '\n');
+				write(sockfd, buff, sizeof(buff));
+			}
 		}
-	
-		
 	}
-}
 
 int main(int argc , char* argv[])
 {
