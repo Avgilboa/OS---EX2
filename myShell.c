@@ -18,6 +18,7 @@ int Copy();
 int Unix_command();
 int pip();
 int redirect();
+int direct();
 
 int main(int argc , char* argv[]){
     init_shell();
@@ -26,7 +27,30 @@ int main(int argc , char* argv[]){
     //while()
         fgets(command,256,stdin);
         command[strlen(command)-1];
-        if( strchr(command , '|') ){
+
+        if (strchr(command, '>')){
+            char* word;
+            char left[256] = {'\0'};
+            char right[256] = {'\0'};
+            word = strtok(command," > ");  // ls -l
+            strcpy(left, word);
+            word = strtok(NULL,"\n");
+            strcpy(right, &(word[2]));
+            redirect(left, right);
+        }
+
+        else if (strchr(command, '<')){
+            char* word;
+            char left[256] = {'\0'};
+            char right[256] = {'\0'};
+            word = strtok(command," < ");  // ls -l
+            strcpy(left, word);
+            word = strtok(NULL,"\n");
+            strcpy(right, &(word[2]));
+            direct(left, right);
+        }
+
+        else if( strchr(command , '|') ){
             char* word;
             char left[256] = {'\0'};
             char right[256] = {'\0'};
@@ -37,6 +61,7 @@ int main(int argc , char* argv[]){
             strcpy(right, &(word[2]));
             //printf("the second command is : %s \n" , right);
             pip(left, right);
+            return 0;
   
         }
         //if(strncmp(command,"exit",4) ==0) break;
@@ -46,11 +71,13 @@ int main(int argc , char* argv[]){
         
         else
         { 
-            Unix_command(command);
+            char* word;
+            word = strtok(command,"\n");
+            Unix_command(word);
         }
         bzero(command, 256);
+        wait(NULL);
 
-    printf("goodbye\n");
     // FILE *f1 = fopen("out.txt", "w");
     // fclose(f1);
     // char *newargv2[] = {"rm","out.txt",NULL};
@@ -60,9 +87,37 @@ int main(int argc , char* argv[]){
 }
 int redirect(char* str , char* filename ){
     int fd[2];
-    fd[1]
-    func(str)
-    write(name, fd[0], 1024);
+    pipe(fd);
+    dup2(fd[1], STDOUT_FILENO);
+    Unix_command(str);
+    char buff[1024] = {'\0'};
+    read(fd[0], buff, 1024);
+    FILE *file = fopen(filename, "w");
+
+    int results = fputs(buff, file);
+    fclose(file);
+    return 1;
+}
+int direct(char* str , char* filename ){
+    int fd[2];
+    pipe(fd);
+    char source[1024] = {'\0'};
+    FILE *fp = fopen(filename, "r");
+    char ch;
+    if(fp != NULL)
+    {
+        while( (ch = (getc(fp)) ) != EOF)
+        {
+            strcat(source, &ch);
+        }
+        fclose(fp);
+        write(fd[1], source , 1024);
+        dup2(fd[0], STDIN_FILENO);
+        close(fd[1]);
+        close(fd[0]);
+        Unix_command(str);
+    }
+
 }
 
 
@@ -202,9 +257,10 @@ int pip(char* lft , char* right){
             else{
                 Unix_command(right);
             }
-            wait(NULL);
-            return 1;
+            
+            
         }
+        return 1;
         
     }
 
@@ -220,15 +276,16 @@ int Unix_command(char *str)
         newargv[i++] = word;
         word = strtok(NULL, " ");
     }
+    newargv[i] = NULL;
     if((pid1 = fork()) < 0){
         perror("fork");
         exit(2);
     }
     if(pid1 ==0 ){
-        newargv[i] = NULL;
+        
         char bin[] = "/bin/";
         strcat(bin,newargv[0]);
-        execve(bin, newargv,NULL); // run the first program
+        execve(bin, newargv ,NULL); // run the first program
         perror("execve"); //only if have error
         _exit(2);
     }
