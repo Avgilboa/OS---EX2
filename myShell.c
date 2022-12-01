@@ -40,10 +40,11 @@ int init_shell(char *str)
         char* word;
         char left[256] = {'\0'};
         char right[256] = {'\0'};
-        word = strtok(command," > ");  // ls -l
+        word = strtok(command,">");  // ls -l
         strcpy(left, word);
         word = strtok(NULL,"\n");
-        strcpy(right, &(word[2]));
+        strcpy(right, &(word[1]));
+        printf("left is: %s\n right is: %s\n",left,right);
         redirect(left, right);
     }
 
@@ -51,10 +52,10 @@ int init_shell(char *str)
         char* word;
         char left[256] = {'\0'};
         char right[256] = {'\0'};
-        word = strtok(command," < ");  // ls -l
+        word = strtok(command,"<");  // ls -l
         strcpy(left, word);
         word = strtok(NULL,"\n");
-        strcpy(right, &(word[2]));
+        strcpy(right, &(word[1]));
         direct(left, right);
     }
 
@@ -66,6 +67,7 @@ int init_shell(char *str)
 
         strcpy(left, word);
         word = strtok(NULL,"\n");
+        printf("the command is: %s\n",word);
         strcpy(right, &(word[2]));
         //printf("the second command is : %s \n" , right);
         pip(left, right);
@@ -86,8 +88,6 @@ int init_shell(char *str)
     bzero(command, 256);
     wait(NULL);
     return 0;
-
-    
 }
 int redirect(char* str , char* filename ){
     int fd[2];
@@ -106,21 +106,18 @@ int direct(char* str , char* filename ){
     int fd[2];
     pipe(fd);
     char source[1024] = {'\0'};
-    FILE *fp = fopen(filename, "r");
-    char ch;
-    if(fp != NULL)
+    int f1;
+    if ((f1 = open(filename ,O_RDONLY)) < 0) //open file 1 for read
     {
-        while( (ch = (getc(fp)) ) != EOF)
-        {
-            strcat(source, &ch);
-        }
-        fclose(fp);
-        write(fd[1], source , 1024);
-        dup2(fd[0], STDIN_FILENO);
-        close(fd[1]);
-        close(fd[0]);
-        Unix_command(str);
+        printf("%s\n",filename);
+        perror(" cant open sorce file");
+        exit(1);
     }
+    dup2(f1, STDIN_FILENO);
+    close(fd[1]);
+    close(fd[0]);
+    init_shell(str);
+    
 
 }
 
