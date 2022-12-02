@@ -32,13 +32,7 @@ int server(char* port) ; //{
 void funcserv();
 
 int main(int argc , char* argv[]){
-    if(strcmp(argv[1], "s") == 0){
-        server("5555");
-    }
-    else if(strcmp(argv[1], "c") == 0){
-        client("ls -l", "127.0.0.1", "5555");
-    }
-    //init_shell(NULL);
+    init_shell(NULL);
     printf("goodbye\n");
     return 0;
 }
@@ -79,7 +73,7 @@ int init_shell(char *str)
     {
         char *word;
         word = strtok(command,"{");
-        //server(word[1]);
+        server(&word[1]);
     }
     else if (strchr(command,'}'))
     {
@@ -91,10 +85,9 @@ int init_shell(char *str)
         strcpy(ip,&word[1]);
         word = strtok(NULL," ");
         strcpy(port,word);
-        printf("command is:%s\nip is:%s\nport is:%s",comm,ip,port);
-        //client(comm,ip,port);
-
+        client(comm,ip,port);
     }
+
 
     else if( strchr(command , '|') ){
         char* word;
@@ -335,33 +328,65 @@ int Unix_command(char *str)
 
 void funcserv(int connfd)
 {
-	char buff[MAX];
+	char buff[1024];
+    char * newargv[] = {NULL};
 	int n;
 	// infinite loop for chat
 	for (;;) {
-		bzero(buff, MAX);
-		int pid1 = fork();
-		if(pid1 == 0){
+		int fd[2];
+		if(pipe(fd) < 0){
+			perror("pipe");
+			exit(2);
+		}
+			// dup2(fd[1], STDOUT_FILENO );
+			// close(fd[1]);
+            char * _word;
 			if (read(connfd, buff, sizeof(buff)) >0){
-				printf("%s" , buff);  ///t To client : ", buff);
-				bzero(buff, MAX);
+                _word = strtok(buff,"\n");  /// To client : ", buff); 
 			}
-			// print buffer which contains the client contents
 
-		} 
-		else
-		{
-			bzero(buff, MAX);
-			n = 0;
-			// copy server message in the buffer
-			while ((buff[n++] = getchar()) != '\n');
-			// and send that buffer to client
-			write(connfd, buff, sizeof(buff));
+			    n = 0;
+			    int res[2];
+			    if(pipe(res) <0 ){perror("pipe");}
+                // printf("\n%s\n", buff);
+
+                //     char* word;
+                //     word = strtok(_word," ");
+                    int i=0 , pid1;
+                //     while (word)
+                //     {
+                //         newargv[i++] = word;
+                //         word = strtok(NULL, " ");
+                //     }
+                //     newargv[i] = NULL;
+                    if((pid1 = fork()) < 0){
+                        perror("fork");
+                        exit(2);
+                    }
+                    if(pid1 ==0 ){
+                        dup2(res[1], STDOUT_FILENO);
+                        // char bin[] = "/bin/";
+                        // strcat(bin,newargv[0]);
+                        // execve(bin, newargv ,NULL); // run the first program
+                        // perror("execve"); //only if have error
+                        // _exit(2);
+                        init_shell(_word);
+                    }
+                    else 
+                    {
+                        //wait(NULL);
+                        close(res[1]);
+                        bzero(buff,sizeof(buff));
+                        read(res[0], buff, sizeof(buff));
+                        close(res[0]);
+                        // and send that buffer to client
+                        write(connfd, buff, sizeof(buff));
+                        waitpid(pid1,NULL, 0);
+                    }
 		}
 		
 
 	}
-}
 
 
 
@@ -411,10 +436,10 @@ int server(char* port){
 		exit(0);
 	}
 	else
-		printf("listen to [any] in port %s \n" , argv[1]);
+		printf("listen to [any] in port %s \n" ,port);
 
 	// Function for chatting between client and server
-	func(connfd);
+	funcserv(connfd);
 
 	// After chatting close the socket
 	close(sockfd);
@@ -425,8 +450,9 @@ int server(char* port){
 
 
 void funclient(int sockfd , char* command){
-	char buff[MAX];
+	char buff[1024];
 	int n;
+    write(sockfd, command, sizeof(buff));
 	for (;;) {
 		bzero(buff, sizeof(buff));
 		
@@ -441,8 +467,8 @@ void funclient(int sockfd , char* command){
 		}
 		else{
 			n = 0;
-			while ((buff[n++] = getchar()) != '\n');
-			write(sockfd, buff, sizeof(buff));
+			//while ((buff[n++] = getchar()) != '\n');
+			
 		}
 	
 		
@@ -481,7 +507,7 @@ int client(char* command, char* ip , char* port){
 		printf("connected to %s port: %s succeed\n" , ip , port);
 
 	// function for chat
-	funclient(sockfd);
+	funclient(sockfd, command);
 
 	// close the socket
 	close(sockfd);
